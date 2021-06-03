@@ -26,6 +26,8 @@ What happened? Filenames are encoded in [unicode](https://fr.wikipedia.org/wiki/
 
 ### diagnostic
 
+The python standard library has many useful tools, and [unicodedata](https://docs.python.org/3/library/unicodedata.html) will be perfect to understand what happened inside these filenames and how to mitigate this.
+
 ```python
 In [4]: fname = 'Qui êtes-vous, Polly Maggoo.DVDRip.Xvid-KG.avi'
 

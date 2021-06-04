@@ -4,24 +4,22 @@ import filecmp
 import os
 def path_depth(fname, sep='/'):
    return len(os.path.normpath(fname).split(sep))
-def max_depth(fnames):
-    maxdepth = 0
-    for fname in fnames:
-        maxdepth = max(maxdepth, path_depth(fname))
+def max_depth(fnames, maxdepth = 0):
+    for fname in fnames: maxdepth = max(maxdepth, path_depth(fname))
     return maxdepth
 
 from pathlib import Path
 norm_form, other_forms = 'NFC', ['NFD', 'NFKD']
-def dedup(path, pattern='**/*', dry_run=True, verb=False):
+def dedup(foldername, pattern='**/*', dry_run=True, verb=False):
     # init glob
-    this_path_depth = path_depth(path)
-    fnames = sorted(Path(path).glob(pattern))
+    this_path_depth = path_depth(Path(foldername))
+    fnames = sorted(Path(foldername).glob(pattern))
     max_path_depth = max_depth(fnames)
-    print('Depths to explore = ', max_path_depth, ', Files to explore = ',len(fnames))
+    print('Depths to explore = ', max_path_depth, ', Depths of path = ', this_path_depth, ', Files to explore = ', len(fnames))
 
     # recurse over depths
-    for depth in range(max_path_depth):
-        fnames = sorted(Path(path).glob(pattern))
+    for depth in range(1, max_path_depth+1):
+        fnames = sorted(Path(foldername).glob(pattern))
         print('Depth explored = ', depth, ' - Files to explore Before filtering', len(fnames))
         for fname in fnames:
             # print(path_depth(fname), this_path_depth, depth)

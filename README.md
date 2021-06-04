@@ -168,9 +168,19 @@ Out[35]: ['NFD', 'NFC']
 
 ```python
 In [41]: np.unique([get_form(str(fname)) for fname in sorted(Path('/home/data').glob('**/*'))])
-Out[42]: ['NFD', 'NFC']
+Out[42]: array(['NFC', 'NFD', 'NFKD'], dtype='<U4')
 
 ```
+
+
+```python
+for fname in sorted(Path('/home/data').glob('**/*')):
+    fname_str = str(fname)
+    if not is_utf(fname_str):
+        if unicodedata.is_normalized('NFKD', fname_str): print(fname_str)
+
+```
+
 
   * if it is, does it exist in two versions?
 

@@ -335,6 +335,7 @@ dedup(path, pattern)
 ```
   
   * a more general function handling also for other forms that people may have on their disk:
+
 ```python
 import unicodedata
 import filecmp
@@ -377,4 +378,6 @@ def dedup(path, pattern, dry_run=True, verb=False):
                 break
 
 ```
+  
+  * finally using [shutil](https://docs.python.org/3/library/shutil.html#shutil.move):
   

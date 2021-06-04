@@ -379,5 +379,16 @@ def dedup(path, pattern, dry_run=True, verb=False):
 
 ```
   
-  * finally using [shutil](https://docs.python.org/3/library/shutil.html#shutil.move):
+  * using [shutil](https://docs.python.org/3/library/shutil.html#shutil.move) is more robust with directories
+
+  * but there is a problem appearing when changing the name of a directory. A solution is to compute the depth of each file and to start from the first to the last:
+
+```python
+import os 
+def get_depth(fname, sep='/'):
+   return len(os.path.normpath(fname).split(sep))
+get_depth('/Users/laurentperrinet/quantic/timeline/2021-04-23_PhDProgram-course-in-computational-neuroscience/SpiNNaker/CNT_notebook.ipynb'), get_depth('/Users/laurentperrinet/quantic/timeline/2021-04-23_PhDProgram-course-in-computational-neuroscience/SpiNNaker/'), get_depth('/Users/laurentperrinet/quantic/timeline/2021-04-23_PhDProgram-course-in-computational-neuroscience/SpiNNaker')
+```
+  
+  
   

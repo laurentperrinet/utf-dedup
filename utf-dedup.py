@@ -13,16 +13,23 @@ def max_depth(fnames):
 from pathlib import Path
 norm_form, other_forms = 'NFC', ['NFD', 'NFKD']
 def dedup(path, pattern='**/*', dry_run=True, verb=False):
+    # init glob
+    this_path_depth = path_depth(path)
     fnames = sorted(Path(path).glob(pattern))
     max_path_depth = max_depth(fnames)
-    print(max_path_depth, len(fnames))
+    print('Depths to explore = ', max_path_depth, ', Files to explore = ',len(fnames))
 
+    # recurse over depths
     for depth in range(max_path_depth):
         fnames = sorted(Path(path).glob(pattern))
+        print('Before filtering', depth, len(fnames))
         for fname in fnames:
-            if str(fname) == str(fname).encode('ascii', 'replace').decode('utf-8') or not (path_depth(fname) - max_path_depth == depth): 
+            # print(path_depth(fname), this_path_depth, depth)
+            if not (path_depth(fname) - this_path_depth == depth):
                 fnames.remove(fname)
-        print(depth, len(fnames))
+            elif str(fname) == str(fname).encode('ascii', 'replace').decode('utf-8') : 
+                fnames.remove(fname)
+        print('After filtering', depth, len(fnames))
         for fname in fnames:
             fname_str = str(fname)
             is_name_norm = unicodedata.is_normalized(norm_form, fname_str)

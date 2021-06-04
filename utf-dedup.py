@@ -22,14 +22,14 @@ def dedup(path, pattern='**/*', dry_run=True, verb=False):
     # recurse over depths
     for depth in range(max_path_depth):
         fnames = sorted(Path(path).glob(pattern))
-        print('Before filtering', depth, len(fnames))
+        print('Depth explored = ', depth, ' - Files to explore Before filtering', len(fnames))
         for fname in fnames:
             # print(path_depth(fname), this_path_depth, depth)
             if not (path_depth(fname) - this_path_depth == depth):
                 fnames.remove(fname)
             elif str(fname) == str(fname).encode('ascii', 'replace').decode('utf-8') : 
                 fnames.remove(fname)
-        print('After filtering', depth, len(fnames))
+        print('Depth explored = ', depth, ' - Files to explore After filtering', len(fnames))
         for fname in fnames:
             fname_str = str(fname)
             is_name_norm = unicodedata.is_normalized(norm_form, fname_str)

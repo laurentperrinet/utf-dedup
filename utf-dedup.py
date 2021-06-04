@@ -12,17 +12,17 @@ from pathlib import Path
 norm_form, other_forms = 'NFC', ['NFD', 'NFKD']
 def dedup(foldername, pattern='**/*', dry_run=True, verb=False):
     # init glob
-    this_path_depth = path_depth(str(foldername))
+    this_path_depth = path_depth(Path(foldername))
     fnames = sorted(Path(foldername).glob(pattern))
     max_path_depth = max_depth(fnames)
-    print('Depths to explore = ', max_path_depth, ', Depths of path = ', this_path_depth, ', Files to explore = ', len(fnames))
+    print('Depths to explore = ', max_path_depth, ', Depth of path = ', this_path_depth, ', Files to explore = ', len(fnames))
 
     # recurse over depths
-    for depth in range(1, max_path_depth+1):
+    for depth in range(this_path_depth, max_path_depth+1):
         fnames = sorted(Path(foldername).glob(pattern))
         print('Depth explored = ', depth, ' - Files to explore Before filtering', len(fnames))
         for fname in fnames:
-            if not (path_depth(str(fname)) - this_path_depth == depth):
+            if not path_depth(fname) == depth:
                 fnames.remove(fname)
             elif str(fname) == str(fname).encode('ascii', 'replace').decode('utf-8') : 
                 fnames.remove(fname)

@@ -147,7 +147,7 @@ The “**” pattern means “this directory and all subdirectories, recursively
 
 ```python
 def is_utf(fname):
-   return fname == fname.encode('ascii', 'replace').decode("utf-8")
+   return not fname == fname.encode('ascii', 'replace').decode("utf-8")
 is_utf(str(fname))
 ```
   * get the form:
@@ -176,7 +176,7 @@ Out[42]: array(['NFC', 'NFD', 'NFKD'], dtype='<U4')
 ```python
 for fname in sorted(Path('/home/data').glob('**/*')):
     fname_str = str(fname)
-    if not is_utf(fname_str):
+    if is_utf(fname_str):
         if unicodedata.is_normalized('NFKD', fname_str): print(fname_str)
 
 ```
@@ -256,7 +256,7 @@ import filecmp
 def scan_other_forms(fnames):
     for fname in fnames:
         fname = str(fname)
-        if is_utf(fname):
+        if not is_utf(fname):
             print(f'File {fname=} is NOT utf, skipping')
         else:
             is_norm = Path(unicodedata.normalize(norm_form, fname)).is_file()
@@ -294,7 +294,7 @@ def dedup(path, pattern, dry_run=True):
 
     for fname in fnames:
         fname_str = str(fname)
-        if not is_utf(fname_str):
+        if is_utf(fname_str):
 
             is_norm = Path(unicodedata.normalize(norm_form, fname_str)).is_file()
             is_other = Path(unicodedata.normalize(other_form, fname_str)).is_file()
@@ -345,7 +345,7 @@ def dedup(path, pattern, dry_run=True, verb=True):
 
     for fname in fnames:
         fname_str = str(fname)
-        if not is_utf(fname_str):
+        if is_utf(fname_str):
             is_norm = Path(unicodedata.normalize(norm_form, fname_str)).is_file()
             norm_fname = unicodedata.normalize(norm_form, fname_str)
             

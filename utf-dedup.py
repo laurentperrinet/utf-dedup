@@ -1,4 +1,5 @@
 import unicodedata
+import shutil
 import filecmp
 from pathlib import Path
 norm_form, other_forms = 'NFC', ['NFD', 'NFKD']
@@ -16,7 +17,7 @@ def dedup(path, pattern, dry_run=True, verb=False):
             if dry_run: 
                 print(f'File name {fname_str=} is not in {norm_form=} but does exist in another form, renaming to {norm_fname=}.')
             else:
-                fname.rename(norm_fname)
+                shutil.move(fname_str, norm_fname)
             if Path(norm_fname) in fnames: fnames.remove(Path(norm_fname))
                     
         for other_form in other_forms:
@@ -32,4 +33,3 @@ def dedup(path, pattern, dry_run=True, verb=False):
                     if Path(other_fname) in fnames: fnames.remove(Path(other_fname))                        
                 else:
                     print(f'File {fname_str=} is in {norm_form=} and does exist in {other_form=}. >>> These are different - WARNING !! <<<')
-

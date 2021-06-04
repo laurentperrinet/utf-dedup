@@ -10,14 +10,20 @@ def dedup(path, pattern, dry_run=True, verb=False):
             fnames.remove(fname)
     for fname in fnames:
         fname_str = str(fname)
-        is_name_norm = unicodedata.is_normalized(norm_form, fname_str)            
+        is_name_norm = unicodedata.is_normalized(norm_form, fname_str)
+        if not is_name_norm:
+            norm_fname = unicodedata.normalize(norm_form, fname_str)
+            if dry_run: 
+                print(f'File name {fname_str=} is not in {norm_form=} but does exist in another form, renaming to {norm_fname=}.')
+            else:
+                fname.rename(norm_fname)
+            if Path(norm_fname) in fnames: fnames.remove(Path(norm_fname))
+                    
         for other_form in other_forms:
             other_fname = unicodedata.normalize(other_form, fname_str)
-            path_other =  Path(other_fname)
-            is_other =  path_other.is_file()
-            if is_name_norm and not is_other:
+            if not Path(other_fname).is_file():
                 if verb: print(f'File name {fname_str=} is in {norm_form=} and does not exist in {other_form=}, all is fine and do nothing.')
-            elif is_name_norm and is_other:
+            else:
                 if filecmp.cmp(fname_str, other_fname):
                     if dry_run: 
                         print(f'File name {fname_str=} is in {norm_form=} and does exist in {other_form=}. <<< These are identical - removing other form >>>')
@@ -26,12 +32,4 @@ def dedup(path, pattern, dry_run=True, verb=False):
                     if Path(other_fname) in fnames: fnames.remove(Path(other_fname))                        
                 else:
                     print(f'File {fname_str=} is in {norm_form=} and does exist in {other_form=}. >>> These are different - WARNING !! <<<')
-            elif not is_name_norm and is_other:
-                norm_fname = unicodedata.normalize(norm_form, fname_str)
-                if dry_run: 
-                    print(f'File name {fname_str=} is not in {norm_form=} but does exist in {other_form=}, renaming to {norm_fname=}.')
-                else:
-                    print(other_form, Path(other_fname).is_file(), Path(norm_fname).is_file())
-                    Path(other_fname).rename(norm_fname)
-                if Path(other_fname) in fnames: fnames.remove(Path(other_fname))                        
-                if Path(norm_fname) in fnames: fnames.remove(Path(norm_fname))
+

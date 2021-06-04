@@ -26,7 +26,6 @@ def dedup(path, pattern, dry_run=True, verb=False):
                     if Path(other_fname) in fnames: fnames.remove(Path(other_fname))                        
                 else:
                     print(f'File {fname_str=} is in {norm_form=} and does exist in {other_form=}. >>> These are different - WARNING !! <<<')
-                break
             elif not is_name_norm and is_other:
                 norm_fname = unicodedata.normalize(norm_form, fname_str)
                 if dry_run: 
@@ -36,4 +35,3 @@ def dedup(path, pattern, dry_run=True, verb=False):
                     Path(other_fname).rename(norm_fname)
                 if Path(other_fname) in fnames: fnames.remove(Path(other_fname))                        
                 if Path(norm_fname) in fnames: fnames.remove(Path(norm_fname))
-                break

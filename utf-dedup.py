@@ -31,7 +31,7 @@ def dedup(path, pattern, dry_run=True):
                         print(f'File {fname_str=} is in {norm_form=} and does exist in {other_form=}.')    
                         print('<<< These are identical - removing the other form >>>')
                     else:
-                        Path(other_form).unlink()
+                        Path(other_fname).unlink()
                     if Path(other_fname) in fnames:
                         fnames.remove(Path(other_fname))
 

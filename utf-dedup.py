@@ -2,25 +2,25 @@ import unicodedata
 import shutil
 import filecmp
 import os
-def get_depth(path, depth=0):
-    if not os.path.isdir(path): return depth
-    maxdepth = depth
-    for entry in os.listdir(path):
-        fullpath = os.path.join(path, entry)
-        maxdepth = max(maxdepth, get_depth(fullpath, depth + 1))
-    return maxdepth
-def get_depth(fname, sep='/'):
+def path_depth(fname, sep='/'):
    return len(os.path.normpath(fname).split(sep))
+def max_depth(fnames):
+    maxdepth = 0
+    for fname in fnames:
+        maxdepth = max(maxdepth, path_depth(fname))
+    return maxdepth
 
 from pathlib import Path
 norm_form, other_forms = 'NFC', ['NFD', 'NFKD']
 def dedup(path, pattern='**/*', dry_run=True, verb=False):
-    path_depth = get_depth(path)
-    for depth in range(get_depth(path)):
+    fnames = sorted(Path(path).glob(pattern))
+    max_path_depth = max_depth(fnames)
+    print(max_path_depth, len(fnames))
+
+    for depth in range(max_path_depth):
         fnames = sorted(Path(path).glob(pattern))
-        # filter non UTF filenames
         for fname in fnames:
-            if str(fname) == str(fname).encode('ascii', 'replace').decode('utf-8') or not get_depth(fname) == depth-path_depth: 
+            if str(fname) == str(fname).encode('ascii', 'replace').decode('utf-8') or not (path_depth(fname) - max_path_depth == depth): 
                 fnames.remove(fname)
         print(depth, len(fnames))
         for fname in fnames:

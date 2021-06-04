@@ -119,8 +119,9 @@ Opinions [vary](https://www.win.tue.nl/~aeb/linux/uc/nfc_vs_nfd.html), but ultim
 
 from pathlib import Path
 path, pattern = '..', '**/Qui*'
-for fname in Path(path).glob(pattern): print(fname)
-fname, fname2 = sorted(Path('.').glob('Qui*'))
+
+path, pattern = '.', 'Qui*'
+fnames = sorted(Path(path).glob(pattern))
 ```
 
 The “**” pattern means “this directory and all subdirectories, recursively”. In other words, it enables recursive globbing.
@@ -133,3 +134,152 @@ def is_utf(fname):
    return fname == fname.encode('ascii', 'replace').decode("utf-8")
 is_utf(str(fname))
 ```
+  * get the form:
+
+```python
+import unicodedata
+forms = ['NFC', 'NFKC', 'NFD', 'NFKD']
+def get_form(fname):
+   for form in forms:
+       if unicodedata.is_normalized(form, fname): break
+   return form
+
+In [35]: [get_form(str(fname)) for fname in fnames]
+Out[35]: ['NFD', 'NFC']
+
+```
+ * this allows me to check that in my archives, all files use either 'NFC' or 'NFD':
+
+```python
+In [41]: np.unique([get_form(str(fname)) for fname in sorted(Path('/home/data').glob('**/*'))])
+Out[42]: ['NFD', 'NFC']
+
+```
+
+  * if it is, does it exist in two versions?
+
+```python
+forms = ['NFD', 'NFC']
+def check_other_forms(fname):
+   form = get_form(fname)
+   for other_form in forms:
+      if not other_form == form:
+          other_fname = unicodedata.normalize(other_form, fname)
+          if Path(other_fname).is_file():
+            print(f'File {fname=} is in {form=} and also exists in  {other_fname=} in {other_form=}')
+
+In : [check_other_forms(str(fname)) for fname in fnames]
+
+```
+ 
+  * we can use [filecmp](https://docs.python.org/3/library/filecmp.html) to compare these files
+```python
+forms = ['NFD', 'NFC']
+import filecmp
+def check_other_forms(fname):
+   form = get_form(fname)
+   for other_form in forms:
+      if not other_form == form:
+          other_fname = unicodedata.normalize(other_form, fname)
+          if Path(other_fname).is_file():
+            print(f'File {fname=} is in {form=} and also exists in  {other_fname=} in {other_form=}')
+            if filecmp.cmp(fname, other_fname):
+                print('<<< These are identical >>>')
+            else:
+                print('>>> These are different <<<')
+
+[check_other_forms(str(fname)) for fname in fnames]
+
+```
+
+
+  * Let's simplify as we have only two forms, such that we have three cases
+  
+```python
+norm_form, other_form = 'NFC', 'NFD'
+import filecmp
+def check_other_forms(fname):
+
+   is_norm = Path(unicodedata.normalize(norm_form, fname)).is_file()
+   is_other = Path(unicodedata.normalize(other_form, fname)).is_file()
+   other_fname = unicodedata.normalize(other_form, fname)
+   
+   if is_norm and not is_other:
+      print(f'File {fname=} is in {norm_form=} and does not exist in {other_form=}, do nothing.')
+   elif is_norm and is_other:
+      print(f'File {fname=} is in {norm_form=} and does exist in {other_form=}.')
+      if filecmp.cmp(fname, other_fname):
+          print('<<< These are identical - one shold remove the other form >>>')
+      else:
+          print('>>> These are different - WARNING !! <<<')
+   elif not is_norm and is_other:
+      print(f'File {fname=}  does not exist in {norm_form=} but does in {other_form=}, renaming to {other_fname=}.')
+   else:
+       print ('This should not happen')
+          
+[check_other_forms(str(fname)) for fname in fnames]
+
+```
+
+  * Let's apply this to the results of a glob pattern as we have only two forms, such that we have three cases:
+
+
+```python
+norm_form, other_form = 'NFC', 'NFD'
+import filecmp
+def scan_other_forms(fnames):
+    for fname in fnames:
+        fname = str(fname)
+        if is_utf(fname):
+            print(f'File {fname=} is NOT utf, skipping')
+        else:
+            is_norm = Path(unicodedata.normalize(norm_form, fname)).is_file()
+            is_other = Path(unicodedata.normalize(other_form, fname)).is_file()
+            other_fname = unicodedata.normalize(other_form, fname)
+   
+            if is_norm and not is_other:
+                print(f'File {fname=} is in {norm_form=} and does not exist in {other_form=}, do nothing.')
+            elif is_norm and is_other:
+                print(f'File {fname=} is in {norm_form=} and does exist in {other_form=}.')
+                if filecmp.cmp(fname, other_fname):
+                    print('<<< These are identical - one shold remove the other form >>>')
+                else:
+                    print('>>> These are different - WARNING !! <<<')
+            elif not is_norm and is_other:
+                print(f'File {fname=}  does not exist in {norm_form=} but does in {other_form=}, renaming to {other_fname=}.')
+            else:
+                print ('This should not happen')
+          
+path, pattern = '.', 'Qui*'
+scan_other_forms(sorted(Path(path).glob(pattern)))
+path, pattern = '.', '**/*'
+scan_other_forms(sorted(Path(path).glob(pattern)))
+
+```
+
+
+
+    * finally, one can [remove / unlink](https://docs.python.org/3.9/library/pathlib.html#pathlib.Path.unlink) the identical file in the other form
+```python
+forms = ['NFD', 'NFC']
+import filecmp
+def remove_other_form(fname):
+   form = get_form(fname)
+   for other_form in forms:
+      if not other_form == form:
+          other_fname = unicodedata.normalize(other_form, fname)
+          if Path(other_fname).is_file():
+            print(f'File {fname=} is in {form=} and also exists in  {other_fname=} in {other_form=}')
+            if filecmp.cmp(fname, other_fname):
+                print('<<< These are identical >>>')
+            else:
+                print('>>> These are different <<<')
+
+[check_other_forms(str(fname)) for fname in fnames]
+
+```
+  
+  
+  
+  
+  

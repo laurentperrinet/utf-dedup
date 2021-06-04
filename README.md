@@ -24,6 +24,22 @@ yet, if it happens, you end up with files which are named similarly, yet the fil
 
 What happened? Filenames are encoded in [unicode](https://fr.wikipedia.org/wiki/Unicode), but with two different variants for some characters. To simplify, in the example, one encoding uses `ê` while the other represents `ê` as `^` and `e` superposed.
 
+## usage
+```python
+from utf-dedup import 
+path, pattern = '.', 'Qui*'
+
+path, pattern = '.', '**/*'
+
+dedup(path, pattern)
+
+# dedup(path, pattern, dry_run=False) # BE CAREFUL WITH THAT ONE !!
+```
+
+## development
+
+Here are the step used during development:
+
 ### diagnostic
 
 The python standard library has many useful tools, and [unicodedata](https://docs.python.org/3/library/unicodedata.html) will be perfect to understand what happened inside these filenames and how to mitigate this.
@@ -111,7 +127,7 @@ Out[22]: True
 Opinions [vary](https://www.win.tue.nl/~aeb/linux/uc/nfc_vs_nfd.html), but ultimately they are compatible and interchangeable. So I chose NFC.
 
 
-### solving the problem
+### solving the problem step-by-step
 
 * Let's [glob](https://docs.python.org/3.9/library/pathlib.html#pathlib.Path.glob) some files:
 
@@ -209,7 +225,7 @@ def check_other_forms(fname):
    elif is_norm and is_other:
       print(f'File {fname=} is in {norm_form=} and does exist in {other_form=}.')
       if filecmp.cmp(fname, other_fname):
-          print('<<< These are identical - one shold remove the other form >>>')
+          print('<<< These are identical - one should remove the other form >>>')
       else:
           print('>>> These are different - WARNING !! <<<')
    elif not is_norm and is_other:
@@ -242,7 +258,7 @@ def scan_other_forms(fnames):
             elif is_norm and is_other:
                 print(f'File {fname=} is in {norm_form=} and does exist in {other_form=}.')
                 if filecmp.cmp(fname, other_fname):
-                    print('<<< These are identical - one shold remove the other form >>>')
+                    print('<<< These are identical - one should remove the other form >>>')
                 else:
                     print('>>> These are different - WARNING !! <<<')
             elif not is_norm and is_other:
@@ -259,23 +275,39 @@ scan_other_forms(sorted(Path(path).glob(pattern)))
 
 
 
-    * finally, one can [remove / unlink](https://docs.python.org/3.9/library/pathlib.html#pathlib.Path.unlink) the identical file in the other form
+  * finally, one can [remove / unlink](https://docs.python.org/3.9/library/pathlib.html#pathlib.Path.unlink) the identical file in the other form
 ```python
-forms = ['NFD', 'NFC']
-import filecmp
-def remove_other_form(fname):
-   form = get_form(fname)
-   for other_form in forms:
-      if not other_form == form:
-          other_fname = unicodedata.normalize(other_form, fname)
-          if Path(other_fname).is_file():
-            print(f'File {fname=} is in {form=} and also exists in  {other_fname=} in {other_form=}')
-            if filecmp.cmp(fname, other_fname):
-                print('<<< These are identical >>>')
-            else:
-                print('>>> These are different <<<')
 
-[check_other_forms(str(fname)) for fname in fnames]
+def dedup(path, pattern, dry_run=True):
+
+    fnames = sorted(Path(path).glob(pattern))
+
+    for fname in fnames:
+        fname_str = str(fname)
+        if not is_utf(fname_str):
+
+            is_norm = Path(unicodedata.normalize(norm_form, fname_str)).is_file()
+            is_other = Path(unicodedata.normalize(other_form, fname_str)).is_file()
+            other_fname = unicodedata.normalize(other_form, fname_str)
+   
+            if is_norm and not is_other:
+                print(f'File {fname_str=} is in {norm_form=} and does not exist in {other_form=}, do nothing.')
+            elif is_norm and is_other:
+                print(f'File {fname_str=} is in {norm_form=} and does exist in {other_form=}.')
+                if filecmp.cmp(fname_str, other_fname):
+                    print('<<< These are identical - one should remove the other form >>>')
+                else:
+                    print('>>> These are different - WARNING !! <<<')
+            elif not is_norm and is_other:
+                print(f'File {fname_str=}  does not exist in {norm_form=} but does in {other_form=}, renaming to {other_fname=}.')
+            else:
+                print ('This should not happen')
+          
+path, pattern = '.', 'Qui*'
+dedup(path, pattern)
+
+path, pattern = '.', '**/*'
+dedup(path, pattern)
 
 ```
   

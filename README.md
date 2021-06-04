@@ -113,4 +113,23 @@ Opinions [vary](https://www.win.tue.nl/~aeb/linux/uc/nfc_vs_nfd.html), but ultim
 
 ### solving the problem
 
+* Let's [glob](https://docs.python.org/3.9/library/pathlib.html#pathlib.Path.glob) some files:
 
+```python
+
+from pathlib import Path
+path, pattern = '..', '**/Qui*'
+for fname in Path(path).glob(pattern): print(fname)
+fname, fname2 = sorted(Path('.').glob('Qui*'))
+```
+
+The “**” pattern means “this directory and all subdirectories, recursively”. In other words, it enables recursive globbing.
+
+* we will cycle over all globed file and do the following:
+ * is the file  name coded in utf?
+
+```python
+def is_utf(fname):
+   return fname == fname.encode('ascii', 'replace').decode("utf-8")
+is_utf(str(fname))
+```

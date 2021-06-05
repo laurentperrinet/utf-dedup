@@ -18,29 +18,30 @@ def dedup(foldername, pattern='**/*', dry_run=True, verb=False):
     print('Depths to explore = ', max_path_depth, ', Depth of path = ', this_path_depth, ', Files to explore = ', len(fnames))
 
     # recurse over depths
-    for depth in range(this_path_depth, max_path_depth+1):
+    for this_depth in range(this_path_depth, max_path_depth+1):
         fnames = sorted(Path(foldername).glob(pattern))
-        print('Depth explored = ', depth, ' - Files to explore Before filtering', len(fnames))
+        print('Depth explored = ', this_depth, ' - Files to explore Before filtering', len(fnames))
+        fnames_filt = []
         for fname in fnames:
-            if not path_depth(fname) == depth:
-                fnames.remove(fname)
-            elif str(fname) == str(fname).encode('ascii', 'replace').decode('utf-8') : 
-                fnames.remove(fname)
-        print('Depth explored = ', depth, ' - Files to explore After filtering', len(fnames))
-        for fname in fnames:
+            if path_depth(fname) == this_depth:
+                if not str(fname) == str(fname).encode('ascii', 'replace').decode('utf-8') : 
+                    fnames_filt.append(fname)
+        print('Depth explored = ', this_depth, ' - Files to explore After filtering', len(fnames_filt))
+        
+        for fname in fnames_filt:
             fname_str = str(fname)
             is_name_norm = unicodedata.is_normalized(norm_form, fname_str)
             if not is_name_norm:
                 norm_fname = unicodedata.normalize(norm_form, fname_str)
                 if dry_run: 
-                    print(f'File name {fname_str=} is not in {norm_form=} but does exist in another form, renaming to {norm_fname=}.')
+                    print(f'File name {fname_str=} is not in {norm_form=} but so does exist in another form, renaming to {norm_fname=}.')
                 else:
                     shutil.move(fname_str, norm_fname)
                 if Path(norm_fname) in fnames: fnames.remove(Path(norm_fname))
 
             for other_form in other_forms:
                 other_fname = unicodedata.normalize(other_form, fname_str)
-                if not Path(other_fname).is_file():
+                if not Path(other_fname).exists():
                     if verb: print(f'File name {fname_str=} is in {norm_form=} and does not exist in {other_form=}, all is fine and do nothing.')
                 else:
                     if filecmp.cmp(fname_str, other_fname):

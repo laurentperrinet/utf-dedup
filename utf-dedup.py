@@ -26,12 +26,11 @@ def dedup(foldername, pattern='**/*', dry_run=True, verb=False):
             if path_depth(fname) == this_depth:
                 if not str(fname) == str(fname).encode('ascii', 'replace').decode('utf-8') : 
                     fnames_filt.append(fname)
-        print('Depth explored = ', this_depth, ' - Files to explore After filtering', len(fnames_filt))
+        print('Depth explored = ', this_depth, ' - Files to explore ', len(fnames_filt), '/', len(fnames))
         
         for fname in fnames_filt:
             fname_str = str(fname)
-            is_name_norm = unicodedata.is_normalized(norm_form, fname_str)
-            if not is_name_norm:
+            if not unicodedata.is_normalized(norm_form, fname_str):
                 norm_fname = unicodedata.normalize(norm_form, fname_str)
                 if dry_run: 
                     print(f'File name {fname_str=} is not in {norm_form=} but so does exist in another form, renaming to {norm_fname=}.')
@@ -44,11 +43,12 @@ def dedup(foldername, pattern='**/*', dry_run=True, verb=False):
                 if not Path(other_fname).exists():
                     if verb: print(f'File name {fname_str=} is in {norm_form=} and does not exist in {other_form=}, all is fine and do nothing.')
                 else:
-                    if filecmp.cmp(fname_str, other_fname):
+                    if filecmp.cmp(norm_fname, other_fname):
                         if dry_run: 
                             print(f'File name {fname_str=} is in {norm_form=} and does exist in {other_form=}. <<< These are identical - removing other form >>>')
                         else:
-                            Path(other_fname).unlink(missing_ok=False)
+                            shutil.move(other_fname, norm_fname)
+                            # Path(other_fname).unlink(missing_ok=False)
                         if Path(other_fname) in fnames: fnames.remove(Path(other_fname))                        
                     else:
                         print(f'File {fname_str=} is in {norm_form=} and does exist in {other_form=}. >>> These are different - WARNING !! <<<')

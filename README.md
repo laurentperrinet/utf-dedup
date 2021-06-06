@@ -26,14 +26,20 @@ What happened? Filenames are encoded in [unicode](https://fr.wikipedia.org/wiki/
 
 ## usage
 ```python
-from utf-dedup import 
+from utf_dedup import dedup 
 path, pattern = '.', 'Qui*'
 
 path, pattern = '.', '**/*'
 
-dedup(path, pattern)
+dedup(path)
 
-# dedup(path, pattern, dry_run=False) # BE CAREFUL WITH THAT ONE !!
+# dedup(path, dry_run=False) # BE CAREFUL WITH THAT ONE !!
+```
+
+or directly:
+
+```
+$ python3 -c"from utf_dedup import dedup; dedup('/home/data/2019_archives/', dry_run=True)"
 ```
 
 ## development
@@ -76,7 +82,11 @@ Out[9]: b'Qui \xc3\xaates-vous, Polly Maggoo.DVDRip.Xvid-KG.avi'
 
 In [10]: repr(fname)
 Out[10]: "'Qui êtes-vous, Polly Maggoo.DVDRip.Xvid-KG.avi'"
+```
 
+the unicodedata module provides with an interesting tool:
+
+```python
 In [11]: import unicodedata
 
 In [12]: unicodedata.normalize('NFD', fname)
@@ -111,6 +121,11 @@ In [19]: unicodedata.normalize('NFD', fname).encode('utf-8')
     ...: 
 Out[19]: b'Qui e\xcc\x82tes-vous, Polly Maggoo.DVDRip.Xvid-KG.avi'
 
+```
+
+This allows also to check the form of the filename:
+
+```python
 In [20]: unicodedata.is_normalized('NFD', fname)
 Out[20]: True
 
@@ -131,6 +146,7 @@ Opinions [vary](https://www.win.tue.nl/~aeb/linux/uc/nfc_vs_nfd.html), but ultim
 
 * Let's [glob](https://docs.python.org/3.9/library/pathlib.html#pathlib.Path.glob) some files:
 
+
 ```python
 
 from pathlib import Path
@@ -138,6 +154,14 @@ path, pattern = '..', '**/Qui*'
 
 path, pattern = '.', 'Qui*'
 fnames = sorted(Path(path).glob(pattern))
+```
+
+* the [glob.glob](https://docs.python.org/3/library/glob.html) directive rather extracts filenames:
+```python
+import glob
+
+path, pattern = '/home/data/2019_archives/2019_musique', '**/*'
+fnames = glob.glob(os.path.join(path, pattern))
 ```
 
 The “**” pattern means “this directory and all subdirectories, recursively”. In other words, it enables recursive globbing.

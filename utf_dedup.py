@@ -36,7 +36,8 @@ def dedup(foldername, pattern='**', dry_run=True, verb=False):
                 if dry_run: 
                     print(f'File name {fname=} is not in {norm_form=} but does exist in another form, renaming to {norm_fname=}.')
                 else:
-                    shutil.move(fname, norm_fname)
+                    # shutil.move(fname, norm_fname)
+                    os.rename(fname, norm_fname)
                 if norm_fname in fnames_filt: fnames_filt.remove(norm_fname)
 
         for fname in fnames_filt:
@@ -52,8 +53,10 @@ def dedup(foldername, pattern='**', dry_run=True, verb=False):
                         if dry_run: 
                             print(f'File name {fname=} is in {norm_form=} and does exist in {other_form=}. <<< These are identical - removing other form >>>')
                         else:
-                            shutil.move(other_fname, norm_fname)
-                            # Path(other_fname).unlink(missing_ok=False)
+                            if os.path.is_dir(other_fname):
+                                shutil.rmtree(other_fname)
+                            else:
+                                os.remove(other_fname)
                         if other_fname in fnames_filt: fnames_filt.remove(other_fname)
                     else:
-                        print(f'File {fname=} is in {norm_form=} and does exist in {other_form=}. >>> These are different - WARNING !! <<<')
+                        print(f"File {fname.encode('utf-8')} is in {norm_form=} and does exist in {other_form=} as {other_fname.encode('utf-8')}. >>> These are different - WARNING !! <<<")

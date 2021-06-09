@@ -31,16 +31,23 @@ def dedup(foldername, pattern='**', dry_run=True, verb=False):
         print('Depth explored = ', this_depth, '/', max_path_depth,  ' - Files to explore ', len(fnames_filt), '/', len(fnames))
 
         for fname in fnames_filt:
-            if not unicodedata.is_normalized(norm_form, fname):
-                norm_fname = unicodedata.normalize(norm_form, fname)
+            norm_fname = unicodedata.normalize(norm_form, fname)
+            if (not unicodedata.is_normalized(norm_form, fname)) and (not os.path.exists(norm_fname)):
                 if dry_run: 
-                    print(f'File name {fname=} is not in {norm_form=} but does exist in another form, renaming to {norm_fname=}.')
+                    print(f'File name {fname=} is not in {norm_form=} and does exist in another form, renaming to {norm_fname=}.')
                 else:
-                    # shutil.move(fname, norm_fname)
-                    os.rename(fname, norm_fname)
+                    if os.path.isdir(fname):
+                        shutil.move(fname, norm_fname)
+                    else:
+                        try:
+                            os.rename(fname, norm_fname)
+                        except FileNotFoundError as e:
+                            print(f"file {fname.encode('utf-8')} is not in {norm_form=} and should be renamed as {norm_fname.encode('utf-8')} but got")
+                            print(e)
                 if norm_fname in fnames_filt: fnames_filt.remove(norm_fname)
 
         for fname in fnames_filt:
+            norm_fname = unicodedata.normalize(norm_form, fname)
             if not os.path.exists(norm_fname):
                 print(f'File name {norm_fname=} does not exist, this should not happen.')
             for other_form in other_forms:
@@ -53,10 +60,10 @@ def dedup(foldername, pattern='**', dry_run=True, verb=False):
                         if dry_run: 
                             print(f'File name {fname=} is in {norm_form=} and does exist in {other_form=}. <<< These are identical - removing other form >>>')
                         else:
-                            if os.path.is_dir(other_fname):
+                            if os.path.isdir(other_fname):
                                 shutil.rmtree(other_fname)
                             else:
                                 os.remove(other_fname)
                         if other_fname in fnames_filt: fnames_filt.remove(other_fname)
                     else:
-                        print(f"File {fname.encode('utf-8')} is in {norm_form=} and does exist in {other_form=} as {other_fname.encode('utf-8')}. >>> These are different - WARNING !! <<<")
+                        print(f"file {fname.encode('utf-8')} is in {norm_form=} and does exist in {other_form=} as {other_fname.encode('utf-8')}. >>> these are different - warning !! <<<")

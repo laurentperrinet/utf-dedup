@@ -1,21 +1,20 @@
 # utf-dedup, a simple utility to remove duplicate filenames
 
-
 ## the story
 
-Syncing files, especially across different OSes can generate duplicate files. For instance, this may happen when copying files from the `src` folder of a remote host `HOST`to a `dst` folder on the local machine:
+Syncing files, especially across different OSes can generate duplicate files. For instance, this may happen when copying files from the `src` folder of a remote host `HOST` running MacOS to a `dst` folder on the local machine running Linux:
 
 ```
 rsync -av HOST:src/ dst
 ```
 
-You can prevent this by adding a proper option such as
+You can prevent duplicates by adding a proper option such as
 
 ```
 rsync -av--iconv=UTF-8-MAC,UTF-8 HOST:src/ dst
 ```
 
-yet, if it happens, you end up with files which are named similarly, yet the files are duplicated. For instance
+yet, *typos*  happen, and you end up with files which are named similarly, yet the files are duplicated. For instance
 
 ```python
 %ls Qui*
@@ -24,9 +23,14 @@ yet, if it happens, you end up with files which are named similarly, yet the fil
 
 What happened? Filenames are encoded in [unicode](https://fr.wikipedia.org/wiki/Unicode), but with two different variants for some characters. To simplify, in the example, one encoding uses `ê` while the other represents `ê` as `^` and `e` superposed.
 
+This script allows to remove duplicates and keep only one form of the encoding (`NFC` see below).
+
 ## usage
+
+Get the script (clone, download, or copy/paste the code, ...) and use it simply as this :
+
 ```python
-from utf_dedup import dedup 
+from utf_dedup import dedup
 path, pattern = '.', 'Qui*'
 
 path, pattern = '.', '**/*'
@@ -36,11 +40,13 @@ dedup(path)
 # dedup(path, dry_run=False) # BE CAREFUL WITH THAT ONE !!
 ```
 
-or directly:
+or directly from the bash:
 
 ```
 $ python3 -c"from utf_dedup import dedup; dedup('/home/data/2019_archives/', dry_run=True)"
 ```
+
+This uses only libraries from the standard library, there is no dependency to install.
 
 ## development
 
@@ -54,7 +60,7 @@ The python standard library has many useful tools, and [unicodedata](https://doc
 In [4]: fname = 'Qui êtes-vous, Polly Maggoo.DVDRip.Xvid-KG.avi'
 
 In [5]: fname2 = 'Qui êtes-vous, Polly Maggoo.DVDRip.Xvid-KG.avi'
-   ...: 
+   ...:
 
 In [6]: fname
 Out[6]: 'Qui êtes-vous, Polly Maggoo.DVDRip.Xvid-KG.avi'
@@ -266,7 +272,6 @@ def check_other_forms(fname):
       print(f'File {fname=}  does not exist in {norm_form=} but does in {other_form=}, renaming to {other_fname=}.')
    else:
        print ('This should not happen')
-          
 [check_other_forms(str(fname)) for fname in fnames]
 
 ```
@@ -332,7 +337,7 @@ def dedup(path, pattern, dry_run=True):
             elif is_norm and is_other:
                 if filecmp.cmp(fname_str, other_fname):
                     if dry_run: 
-                        print(f'File {fname_str=} is in {norm_form=} and does exist in {other_form=}.')    
+                        print(f'File {fname_str=} is in {norm_form=} and does exist in {other_form=}.')
                         print('<<< These are identical - removing the other form >>>')
                     else:
                         Path(other_fname).unlink()
@@ -343,13 +348,12 @@ def dedup(path, pattern, dry_run=True):
                     print(f'File {fname_str=} is in {norm_form=} and does exist in {other_form=}.')
                     print('>>> These are different - WARNING !! <<<')
             elif not is_norm and is_other:
-                if dry_run: 
+                if dry_run:
                     print(f'File {fname_str=}  does not exist in {norm_form=} but does in {other_form=}, renaming to {norm_fname=}.')
                 else:
                      Path(other_fname).rename(norm_fname)
             else:
                 print ('This should not happen')
-          
 path, pattern = '.', 'Qui*'
 dedup(path, pattern)
 
@@ -357,7 +361,6 @@ path, pattern = '.', '**/*'
 dedup(path, pattern)
 
 ```
-  
   * a more general function handling also for other forms that people may have on their disk:
 
 ```python
@@ -369,11 +372,11 @@ def dedup(path, pattern, dry_run=True, verb=False):
     fnames = sorted(Path(path).glob(pattern))
     # filter non UTF filenames
     for fname in fnames:
-        if str(fname) == str(fname).encode('ascii', 'replace').decode('utf-8'): 
+        if str(fname) == str(fname).encode('ascii', 'replace').decode('utf-8'):
             fnames.remove(fname)
     for fname in fnames:
         fname_str = str(fname)
-        is_name_norm = unicodedata.is_normalized(norm_form, fname_str)            
+        is_name_norm = unicodedata.is_normalized(norm_form, fname_str)
         for other_form in other_forms:
             other_fname = unicodedata.normalize(other_form, fname_str)
             path_other =  Path(other_fname)
@@ -382,37 +385,36 @@ def dedup(path, pattern, dry_run=True, verb=False):
                 if verb: print(f'File name {fname_str=} is in {norm_form=} and does not exist in {other_form=}, all is fine and do nothing.')
             elif is_name_norm and is_other:
                 if filecmp.cmp(fname_str, other_fname):
-                    if dry_run: 
+                    if dry_run:
                         print(f'File name {fname_str=} is in {norm_form=} and does exist in {other_form=}. <<< These are identical - removing other form >>>')
                     else:
                         Path(other_fname).unlink(missing_ok=False)
-                    if Path(other_fname) in fnames: fnames.remove(Path(other_fname))                        
+                    if Path(other_fname) in fnames: fnames.remove(Path(other_fname))
                 else:
                     print(f'File {fname_str=} is in {norm_form=} and does exist in {other_form=}. >>> These are different - WARNING !! <<<')
                 break
             elif not is_name_norm and is_other:
                 norm_fname = unicodedata.normalize(norm_form, fname_str)
-                if dry_run: 
+                if dry_run:
                     print(f'File name {fname_str=} is not in {norm_form=} but does exist in {other_form=}, renaming to {norm_fname=}.')
                 else:
                     print(other_form, Path(other_fname).is_file(), Path(norm_fname).is_file())
                     Path(other_fname).rename(norm_fname)
-                if Path(other_fname) in fnames: fnames.remove(Path(other_fname))                        
+                if Path(other_fname) in fnames: fnames.remove(Path(other_fname))
                 if Path(norm_fname) in fnames: fnames.remove(Path(norm_fname))
                 break
 
 ```
-  
   * using [shutil](https://docs.python.org/3/library/shutil.html#shutil.move) is more robust with directories
 
   * but there is a problem appearing when changing the name of a directory. A solution is to compute the depth of each file and to start from the first to the last   https://github.com/laurentperrinet/utf-dedup/commit/0ea8d8f4d2824871e9d17bd72273ba177ba86312
 
 
 ```python
-import os 
+import os
 def get_depth(fname, sep='/'):
    return len(os.path.normpath(fname).split(sep))
 get_depth('/Users/laurentperrinet/quantic/timeline/2021-04-23_PhDProgram-course-in-computational-neuroscience/SpiNNaker/CNT_notebook.ipynb'), get_depth('/Users/laurentperrinet/quantic/timeline/2021-04-23_PhDProgram-course-in-computational-neuroscience/SpiNNaker/'), get_depth('/Users/laurentperrinet/quantic/timeline/2021-04-23_PhDProgram-course-in-computational-neuroscience/SpiNNaker')
 ```
-  
-  
+
+  * yet another time, I got frustrated with `Path` so returned to use plain `os`...

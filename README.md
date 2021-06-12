@@ -1,5 +1,9 @@
 # utf-dedup, a simple utility to remove duplicate filenames
 
+```
+/!\ NOT READY FOR PRODUCTION YET
+```
+
 ## the story
 
 Syncing files, especially across different OSes can generate duplicate files. For instance, this may happen when copying files from the `src` folder of a remote host `HOST` running MacOS to a `dst` folder on the local machine running Linux:

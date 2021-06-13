@@ -1,9 +1,5 @@
 # utf-dedup, a simple utility to remove duplicate filenames
 
-```
-/!\ NOT READY FOR PRODUCTION YET
-```
-
 ## the story
 
 Syncing files, especially across different OSes can generate duplicate files. For instance, this may happen when copying files from the `src` folder of a remote host `HOST` running MacOS to a `dst` folder on the local machine running Linux:
@@ -422,3 +418,5 @@ get_depth('/Users/laurentperrinet/quantic/timeline/2021-04-23_PhDProgram-course-
 ```
 
   * yet another time, I got frustrated with `Path` so returned to use plain `os`...
+
+  * finally, there was a potential problem with filenames which would have mixed names and I was wronlgy assuming that a filename in one normalization could not be so in another one - which was causing lot's of problems. 

@@ -5,7 +5,7 @@ import filecmp
 import glob
 
 import os
-norm_form, other_forms = 'NFC', ['NFD', 'NFKD']
+norm_form= 'NFC'
 
 def path_depth(fname):
    return len(os.path.normpath(fname).split(os.sep))
@@ -46,11 +46,11 @@ def dedup(foldername, pattern='**', dry_run=True, verb=False):
                 if dry_run:
                     print(f'File name {fname=} is not in pure {norm_form=}, renaming to {norm_fname=}.')
                 if os.path.exists(norm_fname):
-                    if filecmp.cmp(norm_fname, other_fname):
+                    if filecmp.cmp(fname, norm_fname):
                         if os.path.isdir(fname):
                             shutil.move(fname, norm_fname)
                         else:
                             os.rename(fname, norm_fname)
                     else:
-                        print(f"file {fname.encode('utf-8')} is in {norm_form=} and does exist in {other_form=} as {other_fname.encode('utf-8')}. >>> these are different - warning !! <<<")
+                        print(f"file {fname.encode('utf-8')} does exist as {norm_fname.encode('utf-8')}. >>> these are different - warning !! <<<")
 
